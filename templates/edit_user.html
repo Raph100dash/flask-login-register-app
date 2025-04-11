@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if user %}Edit{% else %}Add{% endif %} User</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .form-container h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        form input[type="text"],
+        form input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-label {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button {
+            background-color: blue;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #007BFF;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>{% if user %}Edit{% else %}Add{% endif %} User</h1>
+
+        <form method="POST">
+            <input type="text" name="firstname" value="{{ user.firstname }}" placeholder="First Name" required>
+            <input type="text" name="lastname" value="{{ user.lastname }}" placeholder="Last Name" required>
+            <input type="text" name="phone" value="{{ user.phone_number }}" placeholder="Phone Number" required>
+            <input type="email" name="email" value="{{ user.email }}" placeholder="Email" required>
+            <input type="text" name="username" value="{{ user.User }}" placeholder="Username" required>
+
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_admin" {% if user.is_admin == 1 %}checked{% endif %}>
+                Admin
+            </label>
+
+            <button type="submit">{% if user %}Update{% else %}Add{% endif %} User</button>
+        </form>
+
+        <a class="back-link" href="{{ url_for('admin_dashboard') }}">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

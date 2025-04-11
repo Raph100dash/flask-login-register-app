@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            margin-top: 40px;
+            color: #444;
+        }
+
+        #searchInput {
+            padding: 8px;
+            width: 300px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        table thead {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        table th, table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        a {
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            background-color: #007BFF;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        a:hover {
+            background-color: #0056b3;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-buttons button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .edit-button:hover {
+            background-color: #45a049;
+        }
+
+        .delete-button {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .delete-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .add-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-button:hover {
+            background-color: #218838;
+        }
+
+        .logout-link {
+            position: absolute;
+            top: 165px;
+            right: 225px;
+            text-decoration: none;
+            color: white;
+            background-color: #dc3545;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        .logout-link:hover {
+            background-color: #c82333;
+        }
+
+        .edit-button {
+            background-color: #4CAF50; 
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .edit-button:hover {
+            background-color: #45a049;
+        }
+        
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Welcome, {{ username }} (Admin)</h1>
+
+    <h2>All Users in the Database</h2>
+
+    <button class="add-button" onclick="window.location.href='{{ url_for('add_user') }}'">Add User</button>
+
+    
+    <input type="text" id="searchInput" placeholder="Search users...">
+
+    
+    <table>
+        <thead>
+        <tr>
+            <th>Firstname</th>
+            <th>Lastname</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Admin?</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.firstname }}</td>
+                <td>{{ user.lastname }}</td>
+                <td>{{ user.phone_number }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.User }}</td>
+                <td>{{ 'Yes' if user.is_admin == 1 else 'No' }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button onclick="window.location.href='{{ url_for('edit_user', user_id=user.personID) }}'" class="edit-button">Edit</button>
+                        <button onclick="window.location.href='{{ url_for('delete_user', user_id=user.personID) }}'" class="delete-button">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    
+    <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+</div>
+
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+
+    searchInput.addEventListener('keyup', function () {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
+        });
+    });
+</script>
+</body>
+</html>

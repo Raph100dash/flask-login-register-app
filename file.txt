@@ -1,0 +1,210 @@
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        pwd = request.form['password']
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT Password, User FROM login WHERE User = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+        if user and pwd == user[0]:
+            session['username'] = user[1]
+            return redirect(url_for('home'))
+        else:
+            return render_template('login.html', error='Invalid user or password')
+    return render_template('login.html')
+
+
+
+    @admin_bp.route('/', methods=['GET', 'POST'])
+def admin_dashboard():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    search = request.args.get('search')
+    cursor = mysql.connection.cursor()
+
+    query = "SELECT * FROM login"
+
+    if search:
+        query += " WHERE firstname LIKE %s OR lastname LIKE %s OR User LIKE %s OR email LIKE %s"
+        cursor.execute(query, (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
+    else:
+        cursor.execute(query)
+
+    users = cursor.fetchall()
+
+    return render_template('admin.html', users=users)
+
+
+# Edit User route
+@admin_bp.route('/edit/<int:user_id>', methods=['GET', 'POST'])
+def edit_user(user_id):
+    cursor = mysql.connection.cursor()
+    if request.method == 'POST':
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        username = request.form['username']
+        email = request.form['email']
+        phone_number = request.form['phone_number']
+
+        update_query = """UPDATE login SET first_name=%s, last_name=%s, username=%s, email=%s, phone_number=%s WHERE id=%s"""
+        cursor.execute(update_query, (first_name, last_name, username, email, phone_number, user_id))
+        mysql.connection.commit()
+
+        flash('User updated successfully!', 'success')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    cursor.execute("SELECT * FROM login WHERE id=%s", (user_id,))
+    user = cursor.fetchone()
+
+    if not user:
+        return "User not found", 404
+
+    return render_template('edit_user.html', user=user)
+
+
+
+    ALTER TABLE login
+DROP COLUMN personinfo;
+
+
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_mysqldb import MySQL
+from werkzeug.security import generate_password_hash, check_password_hash
+from MySQLdb.cursors import DictCursor  
+
+app = Flask(__name__)
+app.secret_key = 'your-secret-key'
+
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_DB'] = 'flaskusers'
+
+mysql = MySQL(app)
+
+def get_user_details_from_db(username):
+    cur = mysql.connection.cursor(cursorclass=DictCursor)
+    cur.execute("SELECT User, email, phone_number FROM login WHERE User = %s", (username,))
+    user = cur.fetchone()
+    cur.close()
+    return user
+
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
+@app.route('/home')
+def home():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    username = session['username']
+    user_details = get_user_details_from_db(username)
+    return render_template('home.html', username=username, user=user_details)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        pwd = request.form['password']
+        
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT Password, User, is_admin FROM login WHERE User = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+        
+        if user and pwd == user[0]:
+            session['username'] = user[1]
+            
+            # Check if the user is the first user (admin)
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT COUNT(*) FROM login")
+            user_count = cur.fetchone()[0]
+            cur.close()
+            
+            if user_count == 1:  # This is the first user in the database
+                session['is_admin'] = True
+                return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard
+            else:
+                return redirect(url_for('home'))  # Redirect to the home page for regular users
+            
+        else:
+            return render_template('login.html', error='Invalid user or password')
+    
+    return render_template('login.html')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        firstname = request.form['Firstname']  
+        lastname = request.form['Lastname']  
+        phone = request.form['Phone number'] 
+        email = request.form['Email']         
+        username = request.form['username']
+        pwd = request.form['password']
+
+        cur = mysql.connection.cursor()
+        cur.execute(
+            "INSERT INTO login (firstname, lastname, phone_number, email, User, Password) VALUES (%s, %s, %s, %s, %s, %s)",
+            (firstname, lastname, phone, email, username, pwd)
+        )
+        mysql.connection.commit()
+        cur.close()
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  
+    return redirect(url_for('login'))
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+mysql.init_app(admin_bp)  # Initialize MySQL with the blueprint
+
+# Admin Dashboard route
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'username' not in session or 'is_admin' not in session or not session['is_admin']:
+        return redirect(url_for('home'))  # Non-admins should be redirected to home
+
+    # Admin-related logic here
+    return render_template('admin.html')
+
+
+
+
+# Delete User route
+@admin_bp.route('/delete/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM login WHERE id=%s", (user_id,))
+    mysql.connection.commit()
+    flash('User deleted successfully!', 'danger')
+    return redirect(url_for('admin.admin_dashboard'))
+
+
+# Add User route
+@admin_bp.route('/add', methods=['GET', 'POST'])
+def add_user():
+    if request.method == 'POST':
+        firstname = request.form['first_name']
+        lastname = request.form['last_name']
+        username = request.form['username']
+        email = request.form['email']
+        phone_number = request.form['phone_number']
+
+        insert_query = """INSERT INTO login (first_name, last_name, username, email, phone_number) VALUES (%s, %s, %s, %s, %s)"""
+        cursor = mysql.connection.cursor()
+        cursor.execute(insert_query, (firstname, lastname, username, email, phone_number))
+        mysql.connection.commit()
+
+        flash('User added successfully!', 'success')
+        return redirect(url_for('admin.admin_dashboard'))
+
+    return render_template('add_user.html')

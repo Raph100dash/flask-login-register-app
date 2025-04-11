@@ -46,7 +46,7 @@
             color: white;
         }
 
-        .logout-btn {
+        .logout-btn, .login-btn {
             margin-top: 10px;
             display: inline-block;
         }
@@ -58,12 +58,20 @@
     <div class="message">
         {% if username %}
             <p>Hello {{ username }}, you are already logged in.</p>
-            <a class="logout-btn" href="/logout">Log out</a>
+
+            {% if user %}
+                <div class="user-info">
+                    <p>Your registered email is: {{ user.email }}</p>
+                    <p>Your registered number is: {{ user.phone_number }}</p>
+                </div>
+                <a class="logout-btn" href="/logout">Log out</a>
+            {% endif %}
         {% else %}
-            <p>You are not logged in. Please <a href="/login">login</a> to access the homepage.</p>
+            <p>Please log in to access your account.</p>
+            <a class="login-btn" href="/login">Log in</a>
+            
         {% endif %}
     </div>
-    
 
 </body>
 </html>
